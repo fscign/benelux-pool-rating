@@ -1,0 +1,21 @@
+# One button to start every collection workflow at once (each still shows its own result in the Actions list).
+name: Run all collections
+on:
+  workflow_dispatch:
+permissions:
+  actions: write
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Start every collection workflow
+        run: |
+          for f in .github/workflows/*.yml; do
+            n=$(basename "$f")
+            case "$n" in collect.yml|run-all.yml) continue;; esac
+            gh workflow run "$n" --ref main -R "$GITHUB_REPOSITORY" && echo "started $n" || echo "could not start $n"
+            sleep 2
+          done
