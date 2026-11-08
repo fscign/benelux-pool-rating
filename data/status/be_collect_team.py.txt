@@ -1,1 +1,1 @@
-2026-11-07 06:24 UTC | OK |   72/72: events 22, singles 2177, names without roster match 54, doubles skipped 262
+2026-11-08 05:53 UTC | OK |   5/5: events 5, singles 30, names without roster match 0, doubles skipped 0
