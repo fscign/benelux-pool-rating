@@ -22,7 +22,7 @@ which download these files. The Latvian rating keeps its own Baltic collection.
 | | pzbil.pl (Polish federation) | `pzbil_raw.json.gz` |
 | | EPBF | `epbf_data.json.gz` |
 | | Matchroom / WNT (needs secrets WNT_EMAIL, WNT_PASSWORD) | `wnt_data.json.gz` |
-| pbs.yml (manual) | Predator Pro Billiard Series (ids in `pbs_ids.json`, fixes in `pbs_fixes.json`) | `pbs_data.json.gz` |
+| | Predator Pro Billiard Series (ids in `pbs_ids.json`, fixes in `pbs_fixes.json`); pbs.yml = manual full re-read | `pbs_data.json.gz` |
 
 Each country and each source is a separate job: if one fails, the others are still saved.
 Collectors were moved here on 9 Nov 2026 from german-pool-rating, polish-pool-rating, benelux-pool-rating (this repo,

@@ -1,5 +1,6 @@
-# Predator Pro Billiard Series: manual (a few days after an event, once its id is in pbs_ids.json).
-name: Collect PBS (manual)
+# Predator Pro Billiard Series: runs daily inside sources.yml. This manual workflow is for a full re-read
+# ("Re-read all events") after a rule change in pbs_update.py or pbs_fixes.json.
+name: Collect PBS (full re-read, manual)
 on:
   workflow_dispatch:
     inputs:

@@ -24,6 +24,7 @@ jobs:
           - {name: pzbil, script: collect_pzbil.py, files: pzbil_raw.json.gz}
           - {name: epbf, script: epbf_update.py, files: epbf_data.json.gz}
           - {name: wnt, script: wnt_update.py, files: wnt_data.json.gz}
+          - {name: pbs, script: pbs_update.py, files: pbs_data.json.gz}   # re-reads new and recent events from pbs_ids.json
     uses: ./.github/workflows/collect.yml
     with:
       name: ${{ matrix.name }}
