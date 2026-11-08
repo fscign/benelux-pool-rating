@@ -11,19 +11,20 @@ which download these files. The Latvian rating keeps its own Baltic collection.
 - `status_<source>_<script>.txt` in the release: last run per source (time, OK/FAILED, last log line).
 
 ## Sources and files
+One workflow per source and per CueScore country (each can be run on its own with "Run workflow"); times UTC.
 | Workflow | Source | Files |
 |---|---|---|
-| cuescore.yml (00:07 UTC) | CueScore, per country: de, pl, cz, nl, be, lu, at, ch, it, fr | `<cc>_cuescore_raw.json.gz`, `<cc>_team_raw.json` |
-| sources.yml (01:07 UTC) | tournamentapp.de | `ta_raw.json` |
-| | nuLiga Bavaria | `bbv_nuliga_data.json.gz` |
-| | VeVeTo Hessen | `hessen_veveto.json.gz` |
-| | Score Trek Battle | `scoretrek_raw.json.gz` |
-| | Tournament Service (all countries) | `ts_raw.json.gz` |
-| | pzbil.pl (Polish federation) | `pzbil_raw.json.gz` |
-| | EPBF | `epbf_data.json.gz` |
-| | Matchroom / WNT (needs secrets WNT_EMAIL, WNT_PASSWORD) | `wnt_data.json.gz` |
-| | Predator Pro Billiard Series (ids in `pbs_ids.json`, fixes in `pbs_fixes.json`); pbs.yml = manual full re-read | `pbs_data.json.gz` |
+| cuescore-de / pl / cz / nl / be / lu / at / ch / it / fr (00:07 to 01:55, every 12 min) | CueScore tournaments + team events of that country | `<cc>_cuescore_raw.json.gz`, `<cc>_team_raw.json` |
+| tournamentapp.yml (00:13) | tournamentapp.de | `ta_raw.json` |
+| nuliga.yml (00:25) | nuLiga Bavaria | `bbv_nuliga_data.json.gz` |
+| veveto.yml (00:37) | VeVeTo Hessen | `hessen_veveto.json.gz` |
+| scoretrek.yml (00:49) | Score Trek Battle | `scoretrek_raw.json.gz` |
+| tournamentservice.yml (01:01) | Tournament Service (all countries) | `ts_raw.json.gz` |
+| pzbil.yml (01:13) | pzbil.pl (Polish federation) | `pzbil_raw.json.gz` |
+| epbf.yml (01:25) | EPBF | `epbf_data.json.gz` |
+| wnt.yml (01:37) | Matchroom / WNT (needs secrets WNT_EMAIL, WNT_PASSWORD) | `wnt_data.json.gz` |
+| pbs.yml (Mondays 01:49, and right after `pbs_ids.json` changes) | Predator Pro Billiard Series (ids in `pbs_ids.json`, added by a monthly check in the browser; fixes in `pbs_fixes.json`) | `pbs_data.json.gz` |
 
-Each country and each source is a separate job: if one fails, the others are still saved.
+If one source fails, the others are not affected.
 Collectors were moved here on 9 Nov 2026 from german-pool-rating, polish-pool-rating, benelux-pool-rating (this repo,
 renamed) and latvian-pool-rating (EPBF, Matchroom, PBS).

@@ -1,14 +1,22 @@
-# Predator Pro Billiard Series: runs daily inside sources.yml. This manual workflow is for a full re-read
-# ("Re-read all events") after a rule change in pbs_update.py or pbs_fixes.json.
-name: Collect PBS (full re-read, manual)
+# Predator Pro Billiard Series. Runs weekly (late corrections of events from the last 60 days), right after
+# pbs_ids.json changes (new event ids, added by the monthly check), and by hand ("Re-read all" after a rule change).
+name: PBS
 on:
+  schedule:
+    - cron: '49 1 * * 1'   # Mondays 01:49 UTC
+  push:
+    branches: [main]
+    paths: [pbs_ids.json, pbs_fixes.json]
   workflow_dispatch:
     inputs:
       all: {description: 'Re-read all events', type: boolean, default: false}
 permissions:
   contents: write
+concurrency:
+  group: pbs
+  cancel-in-progress: false
 jobs:
-  pbs:
+  collect:
     uses: ./.github/workflows/collect.yml
     with:
       name: pbs

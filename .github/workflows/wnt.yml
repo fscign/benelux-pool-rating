@@ -1,0 +1,19 @@
+name: Matchroom WNT
+on:
+  schedule:
+    - cron: '37 1 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: wnt
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: wnt
+      scripts: wnt_update.py
+      files: wnt_data.json.gz
+
+    secrets: inherit

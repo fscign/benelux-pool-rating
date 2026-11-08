@@ -1,0 +1,19 @@
+name: pzbil.pl (Poland)
+on:
+  schedule:
+    - cron: '13 1 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: pzbil
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: pzbil
+      scripts: collect_pzbil.py
+      files: pzbil_raw.json.gz
+
+    secrets: inherit

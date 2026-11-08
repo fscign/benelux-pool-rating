@@ -1,0 +1,19 @@
+name: EPBF
+on:
+  schedule:
+    - cron: '25 1 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: epbf
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: epbf
+      scripts: epbf_update.py
+      files: epbf_data.json.gz
+
+    secrets: inherit

@@ -1,0 +1,19 @@
+name: Score Trek
+on:
+  schedule:
+    - cron: '49 0 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: scoretrek
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: scoretrek
+      scripts: collect_scoretrek.py
+      files: scoretrek_raw.json.gz
+
+    secrets: inherit
