@@ -2,3 +2,4 @@ __pycache__/
 *.tmp
 log.txt
 update_log.txt
+status_*.txt

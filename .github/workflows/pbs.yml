@@ -1,0 +1,17 @@
+# Predator Pro Billiard Series: manual (a few days after an event, once its id is in pbs_ids.json).
+name: Collect PBS (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      all: {description: 'Re-read all events', type: boolean, default: false}
+permissions:
+  contents: write
+jobs:
+  pbs:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: pbs
+      scripts: pbs_update.py
+      files: pbs_data.json.gz
+      args: ${{ inputs.all && '--all' || '' }}
+      minutes: 200

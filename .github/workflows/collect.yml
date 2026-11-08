@@ -1,0 +1,61 @@
+# Shared steps for every collection job (called by cuescore.yml, sources.yml and pbs.yml).
+# Data lives in the release "data" (one file per source, replaced on every run), so the git history does not grow every
+# day. The files in data/ in the repo are only the starting copies from 9 Nov 2026, used if a release file is missing.
+name: Collect (shared steps)
+on:
+  workflow_call:
+    inputs:
+      name:    {required: true, type: string}               # e.g. cuescore_nl, epbf (status file name)
+      scripts: {required: true, type: string}               # collector(s) to run, one after another
+      files:   {required: true, type: string}               # data files they read and write
+      args:    {required: false, type: string, default: ''}
+      country: {required: false, type: string, default: ''} # CueScore: country name, e.g. "Czech Republic"
+      cs_file: {required: false, type: string, default: ''}
+      team_file: {required: false, type: string, default: ''}
+      minutes: {required: false, type: number, default: 100} # limit per script; what was read is still saved
+    secrets:
+      WNT_EMAIL: {required: false}
+      WNT_PASSWORD: {required: false}
+permissions:
+  contents: write
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CS_COUNTRY: ${{ inputs.country }}
+      CS_FILE: ${{ inputs.cs_file }}
+      CS_TEAM_FILE: ${{ inputs.team_file }}
+      WNT_EMAIL: ${{ secrets.WNT_EMAIL }}
+      WNT_PASSWORD: ${{ secrets.WNT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install requests beautifulsoup4 lxml
+      - name: Get the latest data from the release
+        run: |
+          mkdir -p data
+          for f in ${{ inputs.files }}; do
+            if gh release download data -p "$f" -D data --clobber 2>/dev/null; then echo "$f: latest from the release"; else echo "$f: starting copy from the repo"; fi
+          done
+      - name: Collect
+        shell: bash
+        run: |
+          fail=0
+          for s in ${{ inputs.scripts }}; do
+            if timeout ${{ inputs.minutes }}m python3 -I $s ${{ inputs.args }} > log.txt 2>&1; then res=OK; else res=FAILED; fail=1; fi
+            { echo "### ${{ inputs.name }} $s ($res)"; echo '```'; tail -25 log.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            echo "$(date -u +'%Y-%m-%d %H:%M') UTC | $res | $(grep -v '^\s*$' log.txt | tail -1 | cut -c1-200)" > "status_${{ inputs.name }}_${s%.py}.txt"
+          done
+          exit $fail
+      - name: Save to the release (also after a failed or partial run, so nothing read is lost)
+        if: always()
+        shell: bash
+        run: |
+          gh release view data >/dev/null 2>&1 || gh release create data --title "Collected pool data" --notes "Raw data from every source, replaced by each collection run. See README.md." || true
+          up=""; for f in ${{ inputs.files }}; do [ -f "data/$f" ] && up="$up data/$f"; done
+          for i in 1 2 3; do gh release upload data $up status_*.txt --clobber && exit 0; sleep 20; done
+          exit 1

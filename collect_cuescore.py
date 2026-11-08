@@ -12,11 +12,11 @@ import json, re, sys, time, datetime, html, os, calendar
 import requests
 from concurrent.futures import ThreadPoolExecutor
 
-FILE = os.environ.get('CS_FILE', 'data/cuescore_raw.json.gz')   # gzipped: the GitHub website accepts at most 25 MB per uploaded file
+FILE = (os.environ.get('CS_FILE') or 'data/de_cuescore_raw.json.gz')   # gzipped: the GitHub website accepts at most 25 MB per uploaded file
 DAYS = int(sys.argv[sys.argv.index('--days') + 1]) if '--days' in sys.argv else 90
 TODAY = datetime.date.today()
 CUTOFF = TODAY - datetime.timedelta(days=DAYS)
-COUNTRY = os.environ.get('CS_COUNTRY', 'Germany')   # Benelux collection: Netherlands, Belgium, Luxembourg
+COUNTRY = (os.environ.get('CS_COUNTRY') or 'Germany')   # set per country by cuescore.yml
 FIRST_YEAR = 2016
 API = 'https://api.cuescore.com'
 S = requests.Session(); S.headers.update({'User-Agent': 'Mozilla/5.0 (pool rating updater)', 'Accept-Language': 'en-US,en;q=0.9'})

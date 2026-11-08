@@ -1,0 +1,8 @@
+{
+  "note": "Manual corrections of PBS set scores (checked by Aleksandrs). Key = CueScore matchId, then set number: [racksA, racksB] replaces the logged score (flag 'corrected', used), \"drop\" removes the set (flag 'dropped', never used). A/B as in the CueScore match.",
+  "fixes": {
+    "68585893": {"_match": "2025 Men's 10-Ball WC stage 1, #93 Michael Feliciano v Soheil Shahriari", "2": [1, 4]},
+    "76480657": {"_match": "2026 Las Vegas Men's Open, #135 Rick Glenn v Nicholas De Leon (second set forfeited)", "2": "drop"},
+    "76480852": {"_match": "2026 Las Vegas Men's Open, #200 Ruslan Chinakhov v Alex Kazakis", "3": [4, 2], "4": "drop"}
+  }
+}
