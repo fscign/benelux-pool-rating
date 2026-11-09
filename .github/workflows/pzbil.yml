@@ -15,5 +15,5 @@ jobs:
       name: pzbil
       scripts: collect_pzbil.py
       files: pzbil_raw.json.gz
-
+      minutes: 200
     secrets: inherit

@@ -22,7 +22,7 @@ Output data/pzbil_raw.json.gz:
 Each run reads new tournaments, tournaments of the last DAYS days or not finished, the current league seasons, and the
 archive once (flag archive_done = 3), then only retries archive pages that failed. Usage: python3 -I collect_pzbil.py [--days 60] [--all]
 """
-import json, re, sys, os, gzip, time, datetime, html as H
+import collections, json, re, sys, os, gzip, time, datetime, html as H
 import requests
 from bs4 import BeautifulSoup
 
@@ -230,7 +230,9 @@ def archive():
     failed_pages, failed_games = [], []
     n_m = 0; seen_pages = set(); seen_games = set()
     games = [(y, l, d) for y, l, d in retry_games]
+    done_years = set(D.get('archive_pass_years', [])) if full else set()   # a full pass cut off by a time limit continues
     for year, start in starts:
+        if full and year in done_years: continue
         queue = [start]; dates = {}
         while queue:
             page = H.unescape(queue.pop(0))
@@ -247,8 +249,13 @@ def archive():
                 if (year, H.unescape(link)) not in seen_pages: queue.append(link)
         games += [(year, l, d) for l, d in dates.items()]
     tries = 0; waiting = []
+    year_games = collections.Counter(y for y, _, _ in games); year_left = dict(year_games)
     for year, link, date in games:
         if (year, link) in seen_games: continue
+        if full:
+            year_left[year] -= 1
+            if year_left[year] == 0:   # every match page of this year tried: the year is done for this pass
+                done_years.add(year); D['archive_pass_years'] = sorted(done_years)
         if not full and tries >= RETRY_CAP: waiting.append([year, link, date]); continue   # rest waits for the next run
         tries += 1
         seen_games.add((year, link))
@@ -259,7 +266,7 @@ def archive():
         try: n_m += archive_match(f'{ARCH}/liga/{year}/{link}', tid, date, year)
         except Exception as e: say('  failed', year, link, repr(e)[:100]); failed_games.append([year, link, date])
     D['archive_failed'] = failed_pages; D['archive_failed_games'] = waiting + failed_games   # untried first next time
-    if full: D['archive_done'] = 3
+    if full: D['archive_done'] = 3; D.pop('archive_pass_years', None)
     say(f'pzbil.pl league archive ({"full pass" if full else "retry of failed pages"}): {n_m} games stored, '
         f'still failing {len(failed_pages)} schedule pages and {len(failed_games)} match pages')
 
