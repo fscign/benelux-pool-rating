@@ -15,6 +15,7 @@ One workflow per source and per CueScore country (each can be run on its own wit
 | Workflow | Source | Files |
 |---|---|---|
 | cuescore-de / pl / cz / nl / be / lu / at / ch / it / fr (00:07 to 01:55, every 12 min) | CueScore tournaments + team events of that country | `<cc>_cuescore_raw.json.gz`, `<cc>_team_raw.json` |
+| cuescore-fi / se / dk / no (02:07, 02:19, 02:31, 02:43; added 12 Nov 2026, first run reads everything since 2016) | CueScore Finland, Sweden, Denmark, Norway | `<cc>_cuescore_raw.json.gz`, `<cc>_team_raw.json` |
 | tournamentapp.yml (00:13) | tournamentapp.de | `ta_raw.json` |
 | nuliga.yml (00:25) | nuLiga Bavaria | `bbv_nuliga_data.json.gz` |
 | veveto.yml (00:37) | VeVeTo Hessen | `hessen_veveto.json.gz` |
