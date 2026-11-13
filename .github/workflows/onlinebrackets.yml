@@ -1,0 +1,19 @@
+# online-brackets.com (Polish club pool tournaments), see collect_onlinebrackets.py. Added 13 Nov 2026.
+name: online-brackets
+on:
+  schedule:
+    - cron: '55 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: onlinebrackets
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: onlinebrackets
+      scripts: collect_onlinebrackets.py
+      files: onlinebrackets_raw.json.gz
+    secrets: inherit
