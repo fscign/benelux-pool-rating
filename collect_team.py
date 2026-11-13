@@ -13,6 +13,8 @@ for doubles. Everything is stored (gather first, decide in build_db.py); events 
 import json, re, os, sys, time, html, datetime, calendar
 import requests
 from concurrent.futures import ThreadPoolExecutor
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # runs with python -I
+import cs_regions as R   # CS_REGION: several countries in one file (13 Nov 2026)
 
 API = 'https://api.cuescore.com'
 WEB = 'https://cuescore.com'
@@ -119,10 +121,21 @@ def fetch_event(tid):
                          m.get('roundName') or '', 0, x['disc'], '0', ''])
     v = (j.get('venues') or [{}])[0] or {}
     trow = [tid, j['name'], (j.get('starttime') or '')[:10], j.get('discipline'), j.get('defaultRaceTo'), 0, 0, j.get('type'),
-            v.get('placename') or '', (j.get('owner') or {}).get('name', ''), nm, len(rows), COUNTRY.lower(), v.get('name') or '', 'team']
+            v.get('placename') or '', (j.get('owner') or {}).get('name', ''), nm, len(rows), R.event_country(j, CTRY.get(tid) or R.REGION) if R.REGION else COUNTRY.lower(), v.get('name') or '', 'team']
     return trow, rows, players, unmatched, doubles
 
+CTRY = {}
+TEAM_DISC = R.DISC or re.compile(r'(8|9|10)-Ball|Multiball')
+def team_wanted(it):
+    return it.get('type') == 1 and TEAM_DISC.fullmatch(it.get('discipline') or '') and it.get('status') in ('Finished', 'Active') \
+        and not re.search(r'doppel|double|scotch|\bduo\b|\bpaar|pärchen|pairs?\b', it['name'], re.I)
+
 def team_events(a, b):
+    if R.REGION:
+        for c in COUNTRIES:
+            for it in R.list_events(get, c, a, b):
+                if team_wanted(it): CTRY[it['tournamentId']] = c; yield it
+        return
     off = 0
     while True:
         jj = get(f'{API}/tournaments/?country={COUNTRY}&from={a}&to={b}&offset={off}').json()
@@ -155,7 +168,11 @@ def run(tids, threads=8):
 
 if __name__ == '__main__':
     os.makedirs('data', exist_ok=True)
-    if not T.get('backfill_done'):
+    COUNTRIES = R.countries(get, 'Germany')
+    if not T.get('backfill_done') and R.REGION:   # regions: one list query per country and year
+        tids = []
+        for y in range(2016, TODAY.year + 1): tids += [it['tournamentId'] for it in team_events(f'{y}-01-01', f'{y}-12-31')]
+    elif not T.get('backfill_done'):
         tids = []
         for y in range(2016, TODAY.year + 1):
             for mth in range(1, 13):

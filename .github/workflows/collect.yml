@@ -12,6 +12,8 @@ on:
       country: {required: false, type: string, default: ''} # CueScore: country name, e.g. "Czech Republic"
       cs_file: {required: false, type: string, default: ''}
       team_file: {required: false, type: string, default: ''}
+      region:  {required: false, type: string, default: ''}  # CueScore: several countries in one file (cs_regions.py)
+      disciplines: {required: false, type: string, default: ''} # CueScore: regex of disciplines to read (empty = old filter)
       minutes: {required: false, type: number, default: 100} # limit per script; what was read is still saved
     secrets:
       WNT_EMAIL: {required: false}
@@ -27,6 +29,8 @@ jobs:
       CS_COUNTRY: ${{ inputs.country }}
       CS_FILE: ${{ inputs.cs_file }}
       CS_TEAM_FILE: ${{ inputs.team_file }}
+      CS_REGION: ${{ inputs.region }}
+      CS_DISCIPLINES: ${{ inputs.disciplines }}
       WNT_EMAIL: ${{ secrets.WNT_EMAIL }}
       WNT_PASSWORD: ${{ secrets.WNT_PASSWORD }}
     steps:

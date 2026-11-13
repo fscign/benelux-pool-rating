@@ -11,6 +11,8 @@ Usage: python3 collect_cuescore.py [--days 90]
 import json, re, sys, time, datetime, html, os, calendar
 import requests
 from concurrent.futures import ThreadPoolExecutor
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # runs with python -I
+import cs_regions as R   # CS_REGION: several countries in one file (13 Nov 2026)
 
 FILE = (os.environ.get('CS_FILE') or 'data/de_cuescore_raw.json.gz')   # gzipped: the GitHub website accepts at most 25 MB per uploaded file
 DAYS = int(sys.argv[sys.argv.index('--days') + 1]) if '--days' in sys.argv else 90
@@ -39,7 +41,12 @@ OPEN = (lambda f, m: gzip.open(f, m + 't', encoding='utf-8')) if FILE.endswith('
 cs = json.load(OPEN(FILE, 'r')) if os.path.exists(FILE) else {'tournaments': [], 'matches': [], 'players': {}}
 have = {t[0] for t in cs['tournaments']}
 
+CTRY = {}   # tournament id -> listed country (regions)
 def cs_list(a, b):
+    if R.REGION:
+        for c in COUNTRIES:
+            for it in R.list_events(get, c, a, b): CTRY[it['tournamentId']] = c; yield it
+        return
     off = 0
     while True:
         j = get(f'{API}/tournaments/?country={COUNTRY}&from={a}&to={b}&offset={off}').json()
@@ -81,12 +88,12 @@ def fetch(tid):
     v = (j.get('venues') or [{}])[0] or {}
     trow = [j['tournamentId'], j['name'], (j.get('starttime') or '')[:10], j.get('discipline'), j.get('defaultRaceTo'),
             j.get('defaultBestOfSets'), handicap(j), j.get('type'), v.get('placename') or v.get('city') or '',
-            (j.get('owner') or {}).get('name', ''), nm, len(ms), COUNTRY.lower(), v.get('name') or '', j.get('status') or '',
+            (j.get('owner') or {}).get('name', ''), nm, len(ms), R.event_country(j, CTRY.get(tid) or R.REGION) if R.REGION else COUNTRY.lower(), v.get('name') or '', j.get('status') or '',
             (j.get('stoptime') or '')[:10]]
     return trow, ms
 
 def wanted(it):
-    return it.get('status') in ('Finished', 'Active') and it.get('type') != 1 and POOL.match(it.get('discipline') or '')
+    return it.get('status') in ('Finished', 'Active') and it.get('type') != 1 and (R.DISC or POOL).match(it.get('discipline') or '')
 
 def run(tids, threads=6):
     def one(tid):
@@ -109,6 +116,24 @@ def run(tids, threads=6):
 def save():
     with OPEN(FILE + '.tmp', 'w') as f: json.dump(cs, f, ensure_ascii=False, separators=(',', ':'))
     os.replace(FILE + '.tmp', FILE)
+
+def backfill_region():
+    """One-time, regions: every pool event since FIRST_YEAR, one country and year at a time, saved after each,
+    so a first run cut off by the time limit continues where it stopped (cs['listed'] remembers finished country-years)."""
+    if cs.get('raw_done'): return
+    listed = set(cs.setdefault('listed', []))
+    for c in COUNTRIES:
+        for y in range(FIRST_YEAR, TODAY.year + 1):
+            key = f'{c}:{y}'
+            if key in listed: continue
+            items = R.list_events(get, c, f'{y}-01-01', f'{y}-12-31')
+            for it in items: CTRY[it['tournamentId']] = c
+            todo = sorted({it['tournamentId'] for it in items if wanted(it)} - have)
+            for k in range(0, len(todo), 300):
+                run(todo[k:k + 300]); save()
+            if todo: say(f'  {c} {y}: {len(todo)} events')
+            cs['listed'].append(key); listed.add(key); save()
+    cs['raw_done'] = True
 
 def backfill():
     """One-time: every German pool event since FIRST_YEAR, everything stored (re-reads events stored by the older, filtering collector)."""
@@ -138,7 +163,10 @@ def update():
 
 if __name__ == '__main__':
     os.makedirs('data', exist_ok=True)
-    backfill()
+    COUNTRIES = R.countries(get, 'Germany')
+    if R.REGION:
+        say(f'Region {R.REGION}: {len(COUNTRIES)} countries'); backfill_region()
+    else: backfill()
     update()
     save()
     open('update_log.txt', 'a').write('\n'.join(log) + '\n')

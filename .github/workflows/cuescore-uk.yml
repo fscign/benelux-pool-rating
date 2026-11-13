@@ -1,0 +1,24 @@
+# CueScore UK & Ireland: countries listed in cs_regions.py (region 'uk'), all in one file. Added 13 Nov 2026.
+# Only 8-ball, 9-ball, 10-ball and straight pool are gathered (handicap events included, flagged in the data).
+name: CueScore UK & Ireland
+on:
+  schedule:
+    - cron: '19 2 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: cuescore-uk
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: cuescore_uk
+      scripts: collect_cuescore.py collect_team.py
+      files: uk_cuescore_raw.json.gz uk_team_raw.json
+      region: uk
+      disciplines: '^(8|9|10)-Ball$|^Straightpool$'
+      cs_file: data/uk_cuescore_raw.json.gz
+      team_file: data/uk_team_raw.json
+    secrets: inherit
