@@ -28,6 +28,8 @@ TODAY = datetime.date.today()
 S = requests.Session(); S.headers.update({'User-Agent': 'Mozilla/5.0 (pool rating collector; github.com/fscign/pool-data)', 'Accept-Language': 'de-AT,de;q=0.9'})
 
 D = json.load(gzip.open(FILE, 'rt', encoding='utf-8')) if os.path.exists(FILE) else {'tournaments': [], 'matches': [], 'players': {}}
+VERSION = 2   # raise when reading changes: everything is read again (v1 of 13 Nov 2026 opened tournaments without year/page: no parts)
+if D.get('version') != VERSION: D = {'tournaments': [], 'matches': [], 'players': D.get('players', {}), 'version': VERSION}
 
 
 def get(path):
@@ -57,7 +59,7 @@ def year_list(y):
             disc = re.search(r"kugeln/(\w+)\.png", rest)
             out.append(dict(id=int(m.group(1)), name=plain(m.group(2)), date=plain(date),
                             place=plain(place.group(1)) if place else '', disc=disc.group(1) if disc else '',
-                            done='fa-check-circle' in rest)); got += 1
+                            done='fa-check-circle' in rest, y=y, n=n)); got += 1
         if not got or f'seite_nr={n + 1}' not in h: break
         n += 1
     return out
@@ -96,7 +98,7 @@ def results(tid, tab):
 
 
 def read(t):
-    h = get(f"ergebnisse.php?art=&typ=&bla=&mnt1=&mnt2=&seite_nr=&id={t['id']}")
+    h = get(f"ergebnisse.php?art=&typ=&bla=&mnt1=&mnt2={t['y']}&seite_nr={t['n']}&id={t['id']}")   # opens only with its list year and page
     tabs = list(dict.fromkeys(re.findall(r'spielfeld\.php\?tID=\d+&(?:amp;)?tabID=(\d+)', h)))
     ms, players = [], {}
     for tab in tabs:
