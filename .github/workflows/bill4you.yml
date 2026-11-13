@@ -1,0 +1,23 @@
+# bill4you.ru pool section (Russia, Belarus...), see collect_bill4you.py. Added 13 Nov 2026.
+# Manual only (Aleksandrs 13 Nov 2026). The first full read may need 2 runs; later runs read the newest 3 list pages.
+name: bill4you Russia
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Time budget in minutes'
+        default: '90'
+permissions:
+  contents: write
+concurrency:
+  group: bill4you
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: bill4you
+      scripts: collect_bill4you.py
+      files: bill4you_raw.json.gz
+      args: --minutes ${{ inputs.minutes || '90' }}
+    secrets: inherit
