@@ -125,7 +125,7 @@ def fetch_event(tid):
     return trow, rows, players, unmatched, doubles
 
 CTRY = {}
-TEAM_DISC = R.DISC or re.compile(r'(8|9|10)-Ball|Multiball')
+TEAM_DISC = R.DISC or re.compile(r'(8|9|10)-Ball|Straightpool')   # 13 Nov 2026: only 8/9/10-ball and straight pool (before: also Multiball)
 def team_wanted(it):
     return it.get('type') == 1 and TEAM_DISC.fullmatch(it.get('discipline') or '') and it.get('status') in ('Finished', 'Active') \
         and not re.search(r'doppel|double|scotch|\bduo\b|\bpaar|pärchen|pairs?\b', it['name'], re.I)
@@ -140,7 +140,7 @@ def team_events(a, b):
     while True:
         jj = get(f'{API}/tournaments/?country={COUNTRY}&from={a}&to={b}&offset={off}').json()
         for it in jj['items']:
-            if it.get('type') == 1 and re.fullmatch(r'(8|9|10)-Ball|Multiball', it.get('discipline') or '') and it.get('status') in ('Finished', 'Active') \
+            if it.get('type') == 1 and TEAM_DISC.fullmatch(it.get('discipline') or '') and it.get('status') in ('Finished', 'Active') \
                and not re.search(r'doppel|double|scotch|\bduo\b|\bpaar|pärchen|pairs?\b', it['name'], re.I):   # pair tournaments: no singles inside
                 yield it
         if not jj.get('hasMore'): break

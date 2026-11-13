@@ -22,7 +22,7 @@ COUNTRY = (os.environ.get('CS_COUNTRY') or 'Germany')   # set per country by cue
 FIRST_YEAR = 2016
 API = 'https://api.cuescore.com'
 S = requests.Session(); S.headers.update({'User-Agent': 'Mozilla/5.0 (pool rating updater)', 'Accept-Language': 'en-US,en;q=0.9'})
-POOL = re.compile(r'^(7|8|9|10)-Ball$|^Multiball$|^Straightpool$|^Onepocket$|^Bankpool$|^Portuguese 8-Ball$', re.I)
+POOL = re.compile(r'^(8|9|10)-Ball$|^Straightpool$', re.I)   # Aleksandrs 13 Nov 2026: only 8/9/10-ball and straight pool are gathered (before: also 7-ball, Multiball, One pocket, Bank pool, Portuguese 8-ball)
 
 def get(url):
     for i in range(4):

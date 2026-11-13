@@ -1,5 +1,5 @@
 # CueScore UK & Ireland: countries listed in cs_regions.py (region 'uk'), all in one file. Added 13 Nov 2026.
-# Only 8-ball, 9-ball, 10-ball and straight pool are gathered (handicap events included, flagged in the data).
+# Only 8-ball, 9-ball, 10-ball and straight pool are gathered (same as every CueScore workflow since 13 Nov; handicap events included, flagged in the data).
 name: CueScore UK & Ireland
 on:
   schedule:
