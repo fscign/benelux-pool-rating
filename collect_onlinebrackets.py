@@ -119,7 +119,8 @@ def main():
         if tid in have: D['tournaments'][have[tid]] = row; upd += 1
         else: have[tid] = len(D['tournaments']); D['tournaments'].append(row); new += 1
         end = ddate(row[6]) or ddate(row[5])
-        if row[4] in ('COMPLETE', 'FINISHED', 'CLOSED') and end and (TODAY - end).days > 30: done.add(tid)
+        if end and ((row[4] in ('COMPLETE', 'FINISHED', 'CLOSED') and (TODAY - end).days > 30) or (TODAY - end).days > 90):
+            done.add(tid)   # many organizers never close their events: after 90 days they are not read again
         if (new + upd) % 50 == 0: save()
     save()
     print(f'online-brackets: {new} new tournaments, {upd} re-read; total {len(D["tournaments"])} tournaments, '
