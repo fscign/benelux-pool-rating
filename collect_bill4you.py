@@ -23,6 +23,8 @@ DELAY = 1.5
 S = requests.Session(); S.headers.update({'User-Agent': 'Mozilla/5.0 (pool rating collector; github.com/fscign/pool-data)', 'Accept-Language': 'ru'})
 D = json.load(gzip.open(FILE, 'rt', encoding='utf-8')) if os.path.exists(FILE) else \
     {'tournaments': [], 'matches': [], 'players': {}, 'done': [], 'skipped': []}
+VERSION = 2   # raise when parsing changes: everything is read again (v1 of 13 Nov 2026 had no round names)
+if D.get('version') != VERSION: D = {'tournaments': [], 'matches': [], 'players': D.get('players', {}), 'done': [], 'skipped': [], 'version': VERSION}
 done, skipped = set(D['done']), set(D['skipped'])
 
 
@@ -66,8 +68,11 @@ def grid(tid):
     rnd, bo = '', 0
     for m in re.finditer(r'<div class="match-item__wrapper" id="tournament-match-(\d+)">(.*?)<div class="match-item__info-footer">(.*?)</div>', h, re.S):
         head = plain(h[prev:m.start()]); prev = m.end()
-        hm = list(re.finditer(r'(ТУР\s*\d+|ФИНАЛ\w*|ПОЛУФИНАЛ\w*|ЧЕТВЕРТЬФИНАЛ\w*)?\s*BO\s*(\d+)\s*([А-ЯЁ ]*СЕТКА)?', head))
-        if hm: rnd = ' '.join(x for x in (hm[-1].group(1), hm[-1].group(3)) if x).strip(); bo = int(hm[-1].group(2))
+        bm = re.findall(r'BO\s*(\d+)', head)
+        if bm:
+            bo = int(bm[-1])
+            tr = re.findall(r'(ТУР\s*\d+|ЧЕТВЕРТЬФИНАЛ|ПОЛУФИНАЛ|ФИНАЛ)', head); sd = re.findall(r'(ВЕРХНЯЯ|НИЖНЯЯ)\s*СЕТКА', head)
+            rnd = ' '.join(([tr[-1]] if tr else []) + ([sd[-1].lower()] if sd else []))
         body = m.group(2)
         parts = re.findall(r'data-id="(\d+)">(.*?)</a>\s*<div class="participant__score[^"]*">\s*([^<]*?)\s*</div>', body, re.S)
         if len(parts) != 2: continue
