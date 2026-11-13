@@ -14,7 +14,7 @@ Output data/bilijar_raw.json.gz:
 First run reads every id (about 5,800 pages, saved every 100 pages, so a run cut off by the time limit continues).
 Later runs read new ids and tournaments that are not finished or are less than 30 days old.
 """
-import json, gzip, os, re, sys, time, datetime
+import json, gzip, os, re, sys, time, datetime, html
 import requests
 from bs4 import BeautifulSoup
 
@@ -76,32 +76,35 @@ def parse(tid, h):
     club = txt(club_a)
     cid = re.search(r'club\.php\?ID=(\d+)', h)
     matches, hcp = [], 0
-    for lab in soup.select('div.toggle > label'):
-        rnd = re.sub(r'\s*-\s*završeni mečevi.*|\s*-\s*.*mečevi.*', '', txt(lab)).strip()
-        tab = lab.find_next_sibling('div')
-        if not tab: continue
-        for tr in tab.select('table[id^=mec] tbody tr'):
-            ins = tr.find_all('input', attrs={'name': re.compile(r'^ID[12]')})
-            tds = tr.find_all('td', recursive=False)
-            if len(ins) < 2 or len(tds) < 10: continue           # byes (">>") and hidden detail rows
-            a, b = ins[0]['value'], ins[1]['value']
-            if a in ('', '0') or b in ('', '0'): continue
-            try: sa, sb = int(txt(tds[4])), int(txt(tds[5]))
-            except ValueError: continue                          # not played yet
-            spot = txt(tds[6])
-            if spot and spot not in ('(0-0)',): hcp = 1
-            dm = re.match(r'(\d\d)\.(\d\d)\.', txt(tds[1]))
-            md = ''
-            if dm:
-                y = tdate.year + (1 if int(dm.group(2)) < tdate.month - 6 else 0)
-                md = f'{y}-{dm.group(2)}-{dm.group(1)}'
-            for side, pid in ((tds[3], a), (tds[7], b)):
-                if pid not in D['players']:
-                    fl = tr.find('a', href=f'players.php?ID={pid}')
-                    img = fl.find('img') if fl else None
-                    flag = re.search(r'flags/(\w+)\.', img['src']).group(1) if img and img.get('src') else ''
-                    D['players'][pid] = [txt(side), flag]
-            matches.append([tid, txt(tds[0]), rnd, int(a), int(b), sa, sb, spot, md, txt(tds[9]).replace('#', '').strip()])
+    # The match tables are not well-formed (unclosed cells, nested toggles), so they are read with patterns, not the DOM:
+    # each row belongs to the last round label before it; cells are split at every "<td".
+    labels = [(mm.start(), re.sub(r'<[^>]+>', '', mm.group(1)).strip()) for mm in re.finditer(r'<label[^>]*>\s*<b>(.*?)</b>', h, re.S)]
+    for mm in re.finditer(r'<tr class="size-11[^"]*">(.*?)</tr>', h, re.S):
+        row = mm.group(1)
+        ids = re.findall(r'name=["\']?ID([12])\d*["\']?\s+value=["\']?(\d+)', row)
+        cells = re.split(r'<td\b', row)[1:]
+        if len(ids) < 2 or len(cells) < 10: continue                 # byes (">>")
+        a, b = ids[0][1], ids[1][1]
+        if a == '0' or b == '0': continue
+        ct = [re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', '<td' + c))).strip() for c in cells]
+        try: sa, sb = int(ct[4]), int(ct[5])
+        except ValueError: continue                                    # not played yet
+        spot = ct[6]
+        if spot and spot != '(0-0)': hcp = 1
+        rnd = ''
+        for pos, name in labels:
+            if pos < mm.start(): rnd = name
+            else: break
+        dm = re.match(r'(\d\d)\.(\d\d)\.', ct[1])
+        md = ''
+        if dm:
+            y = tdate.year + (1 if int(dm.group(2)) < tdate.month - 6 else 0)
+            md = f'{y}-{dm.group(2)}-{dm.group(1)}'
+        for k, pid in ((3, a), (7, b)):
+            if pid not in D['players']:
+                fl = re.search(r'players\.php\?ID=' + pid + r'["\']?>\s*<im\w+ src=["\']?images/flags/(\w+)\.', row)
+                D['players'][pid] = [ct[k], fl.group(1) if fl else '']
+        matches.append([tid, ct[0], rnd, int(a), int(b), sa, sb, spot, md, ct[9].replace('#', '').strip()])
     if vals[2].startswith('4') or re.search(r'hendi|handi|hcp', title + ' ' + desc, re.I): hcp = 1
     t = [tid, title, tdate.isoformat(), vals[1], vals[2], vals[3], vals[4], vals[5], club, int(cid.group(1)) if cid else 0,
          desc, hcp, game(title, desc)]
