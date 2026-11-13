@@ -1,0 +1,24 @@
+# bilijar.club (Serbia and some clubs nearby): all tournaments, see collect_bilijar.py. Added 13 Nov 2026.
+name: bilijar.club
+on:
+  schedule:
+    - cron: '7 3 * * *'
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Time budget in minutes (the first full read takes about 2 runs)'
+        default: '90'
+permissions:
+  contents: write
+concurrency:
+  group: bilijar
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: bilijar
+      scripts: collect_bilijar.py
+      files: bilijar_raw.json.gz
+      args: --minutes ${{ inputs.minutes || '90' }}
+    secrets: inherit
