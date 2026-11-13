@@ -1,9 +1,8 @@
 # CueScore UK & Ireland: countries listed in cs_regions.py (region 'uk'), all in one file. Added 13 Nov 2026.
 # Only 8-ball, 9-ball, 10-ball and straight pool are gathered (same as every CueScore workflow since 13 Nov; handicap events included, flagged in the data).
 name: CueScore UK & Ireland
+# Manual only (Aleksandrs 13 Nov 2026: keep the data available, no need to run every night). Press Run workflow.
 on:
-  schedule:
-    - cron: '19 2 * * *'
   workflow_dispatch:
 permissions:
   contents: write
