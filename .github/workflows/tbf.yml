@@ -1,8 +1,7 @@
 # Turkish Billiards Federation pool portal (portal.bilardo.gov.tr), see collect_tbf.py. Added 13 Nov 2026.
 name: TBF Turkey
+# The portal answers 403 Forbidden to GitHub's servers (test 13 Nov 2026), so there is no daily schedule.
 on:
-  schedule:
-    - cron: '19 3 * * *'
   workflow_dispatch:
     inputs:
       minutes:
