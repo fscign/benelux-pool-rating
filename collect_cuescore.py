@@ -15,7 +15,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # runs with pyt
 import cs_regions as R   # CS_REGION: several countries in one file (13 Nov 2026)
 
 FILE = (os.environ.get('CS_FILE') or 'data/de_cuescore_raw.json.gz')   # gzipped: the GitHub website accepts at most 25 MB per uploaded file
-DAYS = int(sys.argv[sys.argv.index('--days') + 1]) if '--days' in sys.argv else 90
+DAYS = int(sys.argv[sys.argv.index('--days') + 1]) if '--days' in sys.argv else 14   # 90 until 13 Nov 2026 (load on CueScore)
+DELAY = 1.0   # seconds between requests, one request at a time (13 Nov 2026: was 6 in parallel)
 TODAY = datetime.date.today()
 CUTOFF = TODAY - datetime.timedelta(days=DAYS)
 COUNTRY = (os.environ.get('CS_COUNTRY') or 'Germany')   # set per country by cuescore.yml
@@ -27,6 +28,7 @@ POOL = re.compile(r'^(8|9|10)-Ball$|^Straightpool$', re.I)   # Aleksandrs 13 Nov
 def get(url):
     for i in range(4):
         try:
+            time.sleep(DELAY)
             r = S.get(url, timeout=60); r.raise_for_status(); return r
         except Exception:
             if i == 3: raise
@@ -40,6 +42,7 @@ import gzip
 OPEN = (lambda f, m: gzip.open(f, m + 't', encoding='utf-8')) if FILE.endswith('.gz') else (lambda f, m: open(f, m, encoding='utf-8'))
 cs = json.load(OPEN(FILE, 'r')) if os.path.exists(FILE) else {'tournaments': [], 'matches': [], 'players': {}}
 have = {t[0] for t in cs['tournaments']}
+STATUS = {t[0]: (t[14] if len(t) > 14 else '') for t in cs['tournaments']}   # status when stored
 
 CTRY = {}   # tournament id -> listed country (regions)
 def cs_list(a, b):
@@ -52,7 +55,7 @@ def cs_list(a, b):
         j = get(f'{API}/tournaments/?country={COUNTRY}&from={a}&to={b}&offset={off}').json()
         for it in j['items']: yield it
         if not j.get('hasMore'): break
-        off = j['nextOffset']; time.sleep(0.2)
+        off = j['nextOffset']
 
 def handicap(j):
     h = j.get('handicap')
@@ -95,7 +98,7 @@ def fetch(tid):
 def wanted(it):
     return it.get('status') in ('Finished', 'Active') and it.get('type') != 1 and (R.DISC or POOL).match(it.get('discipline') or '')
 
-def run(tids, threads=6):
+def run(tids, threads=1):
     def one(tid):
         for i in range(3):
             try: return tid, fetch(tid)
@@ -153,10 +156,12 @@ def backfill():
 
 def update():
     todo = []
-    for it in cs_list((CUTOFF - datetime.timedelta(days=30)).isoformat(), TODAY.isoformat()):
+    for it in cs_list((TODAY - datetime.timedelta(days=90)).isoformat(), TODAY.isoformat()):
         if not wanted(it): continue
         st = (it.get('starttime') or '')[:10]
-        if it['tournamentId'] in have and st and st < CUTOFF.isoformat(): continue
+        # re-read: new events, events of the last DAYS days, and events of the last 90 days not finished when stored
+        if it['tournamentId'] in have and st and st < CUTOFF.isoformat() and \
+           (st < (TODAY - datetime.timedelta(days=90)).isoformat() or STATUS.get(it['tournamentId']) == 'Finished'): continue
         todo.append(it['tournamentId'])
     new, upd = run(todo)
     say(f'CueScore: {new} new events, {upd} recent ones re-read')

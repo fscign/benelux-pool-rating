@@ -45,7 +45,7 @@ def list_events(get, country, a, b):
         j = get(f'{API}/tournaments/?country={country}&from={a}&to={b}&offset={off}').json()
         items += j['items']
         if not j.get('hasMore'): break
-        off = j['nextOffset']; time.sleep(0.2)
+        off = j['nextOffset']   # get() waits between requests
     if len(items) < 9000 or a[:7] == b[:7] or a[:4] != b[:4]: return items
     import calendar
     y = int(a[:4]); out = []

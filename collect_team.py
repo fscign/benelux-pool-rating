@@ -166,7 +166,14 @@ def run(tids, threads=8):
         stats[0] += 1; stats[1] += len(rows); stats[2] += unm; stats[3] += dbl
     return stats
 
+# PAUSED 13 Nov 2026 (Aleksandrs): cuescore.com/robots.txt says "Disallow: /ajax/*", and the singles inside team
+# events come only from /ajax/match/matchDetails.php. Collection stays off until CueScore agrees; data already
+# collected stays in the files. To switch back on, set PAUSED = False.
+PAUSED = True
+
 if __name__ == '__main__':
+    if PAUSED:
+        print('CueScore team events: paused (cuescore.com robots.txt disallows /ajax/; waiting for CueScore permission)'); sys.exit(0)
     os.makedirs('data', exist_ok=True)
     COUNTRIES = R.countries(get, 'Germany')
     if not T.get('backfill_done') and R.REGION:
