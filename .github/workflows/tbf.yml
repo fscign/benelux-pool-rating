@@ -1,23 +1,30 @@
-# Turkish Billiards Federation pool portal (portal.bilardo.gov.tr), see collect_tbf.py. Added 13 Nov 2026.
+# Turkish Billiards Federation pool portal (portal.bilardo.gov.tr). Added 13 Nov 2026.
+# The portal answers 403 Forbidden to GitHub's servers, so it is read once a month in the built-in browser on
+# Aleksandrs's PC (scheduled task "TBF Turkey monthly": tbf_browser.js + tbf_merge.py), which commits
+# data/tbf_raw.json.gz. This workflow only copies that file to the release, like every other source.
 name: TBF Turkey
-# The portal answers 403 Forbidden to GitHub's servers (test 13 Nov 2026), so there is no daily schedule.
 on:
+  push:
+    branches: [main]
+    paths: ['data/tbf_raw.json.gz']
   workflow_dispatch:
-    inputs:
-      minutes:
-        description: 'Time budget in minutes'
-        default: '90'
 permissions:
   contents: write
 concurrency:
   group: tbf
   cancel-in-progress: false
 jobs:
-  collect:
-    uses: ./.github/workflows/collect.yml
-    with:
-      name: tbf
-      scripts: collect_tbf.py
-      files: tbf_raw.json.gz
-      args: --minutes ${{ inputs.minutes || '90' }}
-    secrets: inherit
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Copy data/tbf_raw.json.gz to the release
+        run: |
+          line=$(python3 -c "import json,gzip;D=json.load(gzip.open('data/tbf_raw.json.gz','rt'));print(f\"read in browser {D.get('updated','?')}: {len(D['tournaments'])} tournaments, {len(D['matches'])} matches, {len(D['players'])} players, last id {D['max_id']}\")")
+          echo "$(date -u +'%Y-%m-%d %H:%M') UTC | OK | $line" > status_tbf_browser.txt
+          echo "$line" >> "$GITHUB_STEP_SUMMARY"
+          cp status_tbf_browser.txt status_tbf_collect_tbf.txt   # replaces the FAILED status of the first GitHub test run (13 Nov 2026)
+          for i in 1 2 3; do gh release upload data data/tbf_raw.json.gz status_tbf_browser.txt status_tbf_collect_tbf.txt --clobber && exit 0; sleep 20; done
+          exit 1
