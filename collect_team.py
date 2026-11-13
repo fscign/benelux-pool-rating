@@ -169,9 +169,26 @@ def run(tids, threads=8):
 if __name__ == '__main__':
     os.makedirs('data', exist_ok=True)
     COUNTRIES = R.countries(get, 'Germany')
-    if not T.get('backfill_done') and R.REGION:   # regions: one list query per country and year
+    if not T.get('backfill_done') and R.REGION:
+        # Regions: one country and year at a time, saved after each, so a first run cut off by the time limit continues
+        # where it stopped (T['listed'] remembers finished country-years). Before 13 Nov 2026 everything was listed first,
+        # which alone took longer than the time limit for the UK and Rest of World.
+        listed = set(T.setdefault('listed', []))
+        all_countries = COUNTRIES
+        for c in all_countries:
+            COUNTRIES = [c]
+            for y in range(2016, TODAY.year + 1):
+                key = f'{c}:{y}'
+                if key in listed: continue
+                ids = sorted({it['tournamentId'] for it in team_events(f'{y}-01-01', f'{y}-12-31')} - done)
+                for k in range(0, len(ids), 50):
+                    run(ids[k:k + 50]); done.update(T['done'])
+                    json.dump(T, open(FILE, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+                if ids: print(f'  {c} {y}: {len(ids)} team events', flush=True)
+                T['listed'].append(key); listed.add(key)
+                json.dump(T, open(FILE, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+        COUNTRIES = all_countries
         tids = []
-        for y in range(2016, TODAY.year + 1): tids += [it['tournamentId'] for it in team_events(f'{y}-01-01', f'{y}-12-31')]
     elif not T.get('backfill_done'):
         tids = []
         for y in range(2016, TODAY.year + 1):
