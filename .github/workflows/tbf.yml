@@ -1,0 +1,24 @@
+# Turkish Billiards Federation pool portal (portal.bilardo.gov.tr), see collect_tbf.py. Added 13 Nov 2026.
+name: TBF Turkey
+on:
+  schedule:
+    - cron: '19 3 * * *'
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'Time budget in minutes'
+        default: '90'
+permissions:
+  contents: write
+concurrency:
+  group: tbf
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: tbf
+      scripts: collect_tbf.py
+      files: tbf_raw.json.gz
+      args: --minutes ${{ inputs.minutes || '90' }}
+    secrets: inherit
