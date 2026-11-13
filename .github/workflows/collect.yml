@@ -14,6 +14,8 @@ on:
       team_file: {required: false, type: string, default: ''}
       region:  {required: false, type: string, default: ''}  # CueScore: several countries in one file (cs_regions.py)
       disciplines: {required: false, type: string, default: ''} # CueScore: regex of disciplines to read (empty = old filter)
+      env_base: {required: false, type: string, default: ''}   # TournamentApp family: site address (TA_BASE)
+      env_file: {required: false, type: string, default: ''}   # TournamentApp family: data file (TA_FILE)
       minutes: {required: false, type: number, default: 100} # limit per script; what was read is still saved
     secrets:
       WNT_EMAIL: {required: false}
@@ -31,6 +33,8 @@ jobs:
       CS_TEAM_FILE: ${{ inputs.team_file }}
       CS_REGION: ${{ inputs.region }}
       CS_DISCIPLINES: ${{ inputs.disciplines }}
+      TA_BASE: ${{ inputs.env_base }}
+      TA_FILE: ${{ inputs.env_file }}
       WNT_EMAIL: ${{ secrets.WNT_EMAIL }}
       WNT_PASSWORD: ${{ secrets.WNT_PASSWORD }}
     steps:

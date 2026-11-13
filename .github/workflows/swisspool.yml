@@ -1,0 +1,22 @@
+# Swisspool (Swiss federation, swisspool-billard.ch): same TournamentApp software as tournamentapp.de, same collector.
+# Added 13 Nov 2026. First run reads every season since 2021.
+name: Swisspool
+on:
+  schedule:
+    - cron: '31 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: swisspool
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: swisspool
+      scripts: collect_tournamentapp.py
+      files: swisspool_raw.json
+      env_base: https://www.swisspool-billard.ch/
+      env_file: data/swisspool_raw.json
+    secrets: inherit

@@ -18,8 +18,8 @@ import requests
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
 
-FILE = 'data/ta_raw.json'
-BASE = 'https://www.tournamentapp.de/'
+FILE = os.environ.get('TA_FILE') or 'data/ta_raw.json'
+BASE = os.environ.get('TA_BASE') or 'https://www.tournamentapp.de/'   # same software: Swisspool (13 Nov 2026)
 DAYS = int(sys.argv[sys.argv.index('--days') + 1]) if '--days' in sys.argv else 60
 TODAY = datetime.date.today()
 FIRST_SEASON = 21
@@ -168,5 +168,5 @@ if __name__ == '__main__':
         if t['tid'] in have: upd += 1
         else: new += 1
     json.dump(D, open(FILE, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-    msg = f'tournamentapp.de: {new} new tournaments, {upd} re-read; total {len(D["tournaments"])} tournaments, {len(D["matches"])} matches'
+    msg = f'{BASE.split("/")[2]}: {new} new tournaments, {upd} re-read; total {len(D["tournaments"])} tournaments, {len(D["matches"])} matches'
     print(msg); open('update_log.txt', 'a').write(msg + '\n')
