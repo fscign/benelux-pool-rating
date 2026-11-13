@@ -51,7 +51,9 @@ def tdate(s):
 
 def season_list(yy):
     out = []
-    for a in soup(get(f'turnierergebnisse.php?s=&saison={yy}')).select('article[onclick]'):
+    h = get(f'turnierergebnisse.php?s=&saison={yy}')
+    if 'article' not in h: print(f'season {yy}: no tournament list in the page ({len(h)} bytes):', re.sub(r'\s+', ' ', h)[:300], flush=True)
+    for a in soup(h).select('article[onclick]'):
         m = re.search(r'tID=(\d+)', a.get('onclick') or '')
         if not m: continue
         badges = [txt(b) for b in a.select('.badge-secondary')]

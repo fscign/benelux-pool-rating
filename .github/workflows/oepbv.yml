@@ -1,0 +1,19 @@
+# ÖPBV (Austrian pool federation, oepbv.at): every tournament since 2019, see collect_oepbv.py. Added 13 Nov 2026.
+name: ÖPBV Austria
+on:
+  schedule:
+    - cron: '43 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: oepbv
+  cancel-in-progress: false
+jobs:
+  collect:
+    uses: ./.github/workflows/collect.yml
+    with:
+      name: oepbv
+      scripts: collect_oepbv.py
+      files: oepbv_raw.json.gz
+    secrets: inherit
