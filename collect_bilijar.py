@@ -27,6 +27,8 @@ S = requests.Session(); S.headers.update({'User-Agent': 'Mozilla/5.0 (pool ratin
 
 D = json.load(gzip.open(FILE, 'rt', encoding='utf-8')) if os.path.exists(FILE) else \
     {'tournaments': [], 'matches': [], 'players': {}, 'done': [], 'empty': [], 'max_id': 0}
+if D.get('version') != 2:   # the first test run (13 Nov 2026) stored tournaments without matches: read them again
+    D['done'] = []; D['version'] = 2
 done, empty = set(D['done']), set(D['empty'])
 
 
