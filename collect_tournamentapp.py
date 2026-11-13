@@ -43,18 +43,21 @@ def soup(h):
 def txt(el): return re.sub(r'\s+', ' ', el.get_text()).strip() if el is not None else ''
 
 def tdate(s):
-    """'02. November 2026, 20:00 Uhr' | '27. - 30. Dezember 2021, 14:00 Uhr' | '30. Juni - 02. Juli 2023' -> (d, m, y)"""
-    m = re.match(r'^(\d{1,2})\.\s*(?:([A-Za-zäöüÄÖÜ]+)\s*)?(?:-\s*\d{1,2}\.\s*(?:([A-Za-zäöüÄÖÜ]+)\s*)?)?(\d{4})', s or '')
+    """'02. November 2026, 20:00 Uhr' | '27. - 30. Dezember 2021, 14:00 Uhr' | '30. Juni - 02. Juli 2023' | '14. Nov. 2026, 11:00' -> (d, m, y)"""
+    m = re.match(r'^(\d{1,2})\.\s*(?:([A-Za-zäöüÄÖÜ]+)\.?\s*)?(?:-\s*\d{1,2}\.\s*(?:([A-Za-zäöüÄÖÜ]+)\.?\s*)?)?(\d{4})', s or '')
     if not m: return None
-    mon = MON.get((m.group(2) or m.group(3) or '').lower())
+    name = (m.group(2) or m.group(3) or '').lower()
+    mon = MON.get(name) or next((v for k, v in MON.items() if name[:3] and k.startswith(name[:3])), None)   # Swisspool: 'Nov.'
     return (int(m.group(1)), mon, int(m.group(4))) if mon else None
 
 def season_list(yy):
     out = []
     h = get(f'turnierergebnisse.php?s=&saison={yy}')
     if 'article' not in h: print(f'season {yy}: no tournament list in the page ({len(h)} bytes):', re.sub(r'\s+', ' ', h)[:300], flush=True)
-    for a in soup(h).select('article[onclick]'):
-        m = re.search(r'tID=(\d+)', a.get('onclick') or '')
+    sp = soup(h)
+    items = sp.select('a.post-modern[href*="tID="]') or sp.select('article[onclick]')   # Swisspool's list uses links; its
+    for a in items:                                                                     # article[onclick] is the upcoming-events box
+        m = re.search(r'tID=(\d+)', (a.get('onclick') or '') + (a.get('href') or ''))
         if not m: continue
         badges = [txt(b) for b in a.select('.badge-secondary')]
         ti = a.select_one('.post-classic-title')
